@@ -13,8 +13,7 @@ phases = hvds.to(hv.Image, kdims=["x", "y"], vdims=["Phase"])
 masks = hvds.to(hv.Image, kdims=["x", "y"], vdims=["Absolute value"])
 ph_fields = phases.dimension_values("field", expanded=False)
 av_fields = masks.dimension_values("field", expanded=False)
-fn = 3#len(ph_fields)
-fig, pla = plt.subplots(fn,3)
+fn = len(ph_fields)
 ph = OrderedDict()
 av = OrderedDict()
 vorticity = OrderedDict()
@@ -34,39 +33,46 @@ def findBlob(data,x0,y0,r,maxDelta):
 					ym = y0+iy
 	return xm, ym
 
-R = 2
+Rcurve = 3
+blur = 3.0
+minSigma = 2
+maxSigma = 7
+threshold = 3.0
+Rcorrect = 1
+
+def normalize(x):
+	xmean = x.mean()
+	xstd = x.std()
+	return (x-xmean)/xstd
+
+fig, pla = plt.subplots(1,3)
 
 for i in range(fn):
-	ph[i] = phases[ph_fields[i+9]].dimension_values("Phase", flat=False)
-	av[i] = masks[av_fields[i+9]].dimension_values("Absolute value", flat=False)
-	vorticity[i] = pgi.vorticityMap(ph[i], av[i], R)
-	vmin = vorticity[i].min()
-	vmean = vorticity[i].mean()
-	vmax = vorticity[i].max()
-	vstd = vorticity[i].std()
-	#vorticity[i] = np.maximum((vorticity[i]-vmean)/vstd,0.0)
-	vorticity[i] = (vorticity[i]-vmean)/vstd
-	#vorticity[i] = (vorticity[i]-vorticity[i].min())/(vorticity[i].max()-vorticity[i].min())
-	#print("norm",vorticity[i].min(),vorticity[i].max())
+	print(i,flush=True)
+	ph[i] = phases[ph_fields[i]].dimension_values("Phase", flat=False)
+	av[i] = masks[av_fields[i]].dimension_values("Absolute value", flat=False)
+	vorticity[i] = pgi.vorticityMap(ph[i], av[i], Rcurve)
+	vorticity[i] = gaussian(vorticity[i],blur)
+	vorticity[i] = normalize(vorticity[i])
 
-	vorticity[i] = gaussian(vorticity[i],2.0)
-
-	blobs = blob_dog(vorticity[i], min_sigma=2, max_sigma=7)
+	blobs = blob_dog(vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
 	blobs[:, 2] = blobs[:, 2] * np.sqrt(2)
 
-	blobs2 = blob_dog(-vorticity[i], min_sigma=2, max_sigma=7)
+	blobs2 = blob_dog(-vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
 	blobs2[:, 2] = blobs2[:, 2] * np.sqrt(2)
 	blobs = list(blobs)+list(blobs2)
 
-	print(i,vmin,vmean,vmax,vstd,flush=True)
-	pla[i,0].imshow(ph[i])
-	pla[i,1].imshow(av[i])
-	pla[i,2].imshow(vorticity[i], cmap="inferno")
+	for k in range(3):
+		pla[k].clear()
+
+	pla[0].imshow(ph[i])
+	pla[1].imshow(av[i])
+	pla[2].imshow(vorticity[i], cmap="inferno")
 	for blob in blobs:
 		y, x, r = blob
-		x2, y2 = findBlob(av[i],x,y,1,int(r/2+0.5))
+		x2, y2 = findBlob(av[i],x,y,Rcorrect,int(r/2+0.5))
 		for j in range(3):
-			#pla[i,j].add_patch(plt.Circle((x, y), r, color='r', linewidth=1, fill=False))
-			pla[i,j].add_patch(plt.Circle((x2, y2), r, color='g', linewidth=1, fill=False))
+			pla[j].add_patch(plt.Circle((x2, y2), r, color='w', linewidth=1, fill=False))
+	plt.savefig("blobs-"+str(i).rjust(4,'0')+".png")
 
-plt.show()
+#plt.show()
