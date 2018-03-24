@@ -55,8 +55,8 @@ for i in range(fn):
     vorticity[i] = gaussian(vorticity[i],blur)
     vorticity[i] = normalize(vorticity[i])
     blobs = blob_dog(vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
-    blobs[:, 2] = blobs[:, 2] * np.sqrt(2)
     blobs2 = blob_dog(-vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
+    blobs[:, 2] = blobs[:, 2] * np.sqrt(2)
     blobs2[:, 2] = blobs2[:, 2] * np.sqrt(2)
     blobs=np.column_stack((blobs,np.ones(blobs.shape[0]),np.arange(blobs.shape[0])))
     blobs2=np.column_stack((blobs2,(-1.)*np.ones(blobs2.shape[0]),np.arange(blobs2.shape[0])))
@@ -89,9 +89,6 @@ for i in range(fn):
         plt.savefig("blobs-"+str(i).rjust(4,'0')+".png")
     past=blobs
     post=blobs2
-        
-        
-        
-        
+
 plik.close()
 #plt.show()
