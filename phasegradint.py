@@ -34,9 +34,18 @@ def integrate(phase,mask,x0,y0,r,dl=0.25):
 		yb = y0+r*np.sin(b)
 		xa, ya = interp(phase,mask,xa,ya)
 		xb, yb = interp(phase,mask,xb,yb)
-		v += np.arcsin(xa*yb-ya*xb)
+		v += (xa*yb-ya*xb)
 
-	return I*v/da/r
+	return I*v/da/r/n
+
+@jit
+def circleSum(data,x0,y0,r):
+	I = 0.0
+	for ix in range(-r,r+1):
+		for iy in range(-r,r+1):
+			if ix*ix+iy*iy<=r*r:
+				I += data[y0+iy,x0+ix]
+	return I
 
 @jit
 def cutoff(mask_data,mask_threshold=0.02,mask_dilation=3):
@@ -62,16 +71,17 @@ def select(mask_data,low,high,mask_threshold=0.02,mask_dilation=3):
 	return np.array(mask_data)
 
 @jit
-def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3):
+def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3,dl=0.25):
 	assert(phase.shape==mask.shape)
 
 	phase = np.array(phase)
+	#mask = np.array(mask)
 	mask = cutoff(np.array(mask),mask_threshold,mask_dilation)
 
 	shape = phase.shape
 	v = np.zeros_like(mask)
 	for ix in range(r,shape[1]-r):
 		for iy in range(r,shape[0]-r):
-			v[iy,ix] = integrate(phase,mask,ix,iy,r)
+			v[iy,ix] = integrate(phase,mask,ix,iy,r,dl)
 
 	return v
