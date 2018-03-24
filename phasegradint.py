@@ -17,6 +17,14 @@ def integrate(phase,mask,x0,y0,r):
 	n = 100
 	da = 2.0*np.pi/n
 	v = 0.0
+	I = 0.0
+	for ix in range(-r,r+1):
+		for iy in range(-r,r+1):
+			if ix*ix+iy*iy<=r*r:
+				I += mask[y0+iy,x0+ix]
+	#if I>0:
+	#	print("I =",I,flush=True)
+	#I = mask[int(y0+0.5),int(x0+0.5)]
 	for i in range(n):
 		a = da*i
 		b = da*(i+1)
@@ -27,13 +35,10 @@ def integrate(phase,mask,x0,y0,r):
 		xa, ya = interp(phase,mask,xa,ya)
 		xb, yb = interp(phase,mask,xb,yb)
 		v += xa*yb-ya*xb
-	return mask[int(y0+0.5),int(x0+0.5)]*v/da/r
+	return I*v/da/r
 
 @jit
-def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3):
-	phase = np.array(phase)
-	mask_data = np.array(mask)
-
+def cutoff(mask_data,mask_threshold=0.02,mask_dilation=3):
 	transf = mask_data / mask_data.max()
 	mask = np.zeros_like(transf)
 	mask[transf > mask_threshold] = 1
@@ -41,7 +46,26 @@ def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3):
 	mask = ndimage.binary_fill_holes(mask)
 
 	mask_data[mask == 0] = 0.0
-	mask = mask_data
+	return np.array(mask_data)
+
+@jit
+def select(mask_data,low,high,mask_threshold=0.02,mask_dilation=3):
+	transf = mask_data / mask_data.max()
+	mask = np.zeros_like(mask_data)
+	mask[transf > mask_threshold] = 1
+	mask = ndimage.binary_dilation(mask, iterations=mask_dilation)
+	mask = ndimage.binary_fill_holes(mask)
+
+	mask_data[mask <= 0] = low
+	mask_data[mask > 0] = high
+	return np.array(mask_data)
+
+@jit
+def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3):
+	phase = np.array(phase)
+	mask_data = np.array(mask)
+
+	mask = cutoff(mask,mask_threshold,mask_dilation)
 
 	#print("mask:",np.min(mask),np.max(mask),flush=True)
 	assert(phase.shape==mask.shape)
