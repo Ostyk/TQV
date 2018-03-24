@@ -36,8 +36,8 @@ def findBlob(data,x0,y0,r,maxDelta):
 Rcurve = 3
 blur = 3.0
 minSigma = 2
-maxSigma = 7
-threshold = 3.0
+maxSigma = 4
+threshold = 2.50
 Rcorrect = 1
 
 def normalize(x):
@@ -46,33 +46,52 @@ def normalize(x):
 	return (x-xmean)/xstd
 
 fig, pla = plt.subplots(1,3)
-
+plik=open("nowy.txt",'w')
 for i in range(fn):
-	print(i,flush=True)
-	ph[i] = phases[ph_fields[i]].dimension_values("Phase", flat=False)
-	av[i] = masks[av_fields[i]].dimension_values("Absolute value", flat=False)
-	vorticity[i] = pgi.vorticityMap(ph[i], av[i], Rcurve)
-	vorticity[i] = gaussian(vorticity[i],blur)
-	vorticity[i] = normalize(vorticity[i])
-
-	blobs = blob_dog(vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
-	blobs[:, 2] = blobs[:, 2] * np.sqrt(2)
-
-	blobs2 = blob_dog(-vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
-	blobs2[:, 2] = blobs2[:, 2] * np.sqrt(2)
-	blobs = list(blobs)+list(blobs2)
-
-	for k in range(3):
-		pla[k].clear()
-
-	pla[0].imshow(ph[i])
-	pla[1].imshow(av[i])
-	pla[2].imshow(vorticity[i], cmap="inferno")
-	for blob in blobs:
-		y, x, r = blob
-		x2, y2 = findBlob(av[i],x,y,Rcorrect,int(r/2+0.5))
-		for j in range(3):
-			pla[j].add_patch(plt.Circle((x2, y2), r, color='w', linewidth=1, fill=False))
-	plt.savefig("blobs-"+str(i).rjust(4,'0')+".png")
-
+    print(i,flush=True)
+    ph[i] = phases[ph_fields[i]].dimension_values("Phase", flat=False)
+    av[i] = masks[av_fields[i]].dimension_values("Absolute value", flat=False)
+    vorticity[i] = pgi.vorticityMap(ph[i], av[i], Rcurve)
+    vorticity[i] = gaussian(vorticity[i],blur)
+    vorticity[i] = normalize(vorticity[i])
+    blobs = blob_dog(vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
+    blobs[:, 2] = blobs[:, 2] * np.sqrt(2)
+    blobs2 = blob_dog(-vorticity[i], min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
+    blobs2[:, 2] = blobs2[:, 2] * np.sqrt(2)
+    blobs=np.column_stack((blobs,np.ones(blobs.shape[0]),np.arange(blobs.shape[0])))
+    blobs2=np.column_stack((blobs2,(-1.)*np.ones(blobs2.shape[0]),np.arange(blobs2.shape[0])))
+    if i==0:
+            past=blobs
+            post=blobs2
+    else:
+        pgi.rename(blobs,past,i)
+        pgi.rename(blobs2,post,i)
+    postit=np.row_stack((past,post)) 
+    blobs=np.row_stack((blobs,blobs2))            
+    for blob in blobs:
+            y, x, r ,kappa,W= blob
+            plik.write("{} {} {} {}\n".format(i,x,y,kappa))
+    for k in range(3):
+        pla[k].clear()
+        pla[0].imshow(ph[i])
+        pla[1].imshow(av[i])
+        pla[2].imshow(vorticity[i], cmap="inferno")
+        for blob in blobs:
+            y, x, r ,kappa,W= blob
+            x2, y2 = findBlob(av[i],x,y,Rcorrect,int(r/2+0.5))
+            blob=[y2,x2,r,kappa,W]
+            for j in range(3):
+                pla[j].add_patch(plt.Circle((x2, y2), r, color='w', linewidth=1, fill=False))
+        for boop in postit:
+            y,x,r,kappa,w=boop
+            for j in range(3):
+                pla[j].add_patch(plt.Circle((x, y), r/2., color='b', linewidth=1, fill=False))
+        plt.savefig("blobs-"+str(i).rjust(4,'0')+".png")
+    past=blobs
+    post=blobs2
+        
+        
+        
+        
+plik.close()
 #plt.show()
