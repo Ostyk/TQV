@@ -60,6 +60,6 @@ for i in range(fn):
             X[0][q][2]=q
             bonus.append(q)
     else:
-        vt.rename(X[i],X[i-1],i,bonus)
+        vt.rename(X[i],X[i-1],i,bonus,bf.Rcurve)
         
     
