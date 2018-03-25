@@ -4,6 +4,17 @@ import numpy as np
 
 @jit
 def circle_coordinates(coordinates, radius,density=20):
+    """
+    Parameters:
+    --------------------
+    coordinates: of x,y
+    radius: given
+    density: how sparse the points on the circle are
+
+    Returns:
+    --------------------
+    Circle coordinates
+    """
     latitude = coordinates[0] # latitude of circle center, decimal degrees
     longitude = coordinates[1]
     x,y=[],[]
@@ -17,6 +28,16 @@ def circle_coordinates(coordinates, radius,density=20):
     return np.array(x),np.array(y)
 @jit
 def azimuth(x,y):
+    """
+    Parameters:
+    --------------------
+    coordinates: of x,y
+
+
+    Returns:
+    --------------------
+    Azimuth angle values
+    """
     r=np.zeros(len(x))
     for i in range(len(x)-1):
         if i == len(x):
@@ -39,6 +60,10 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
     data: phase data
     vortex: x and y coordinates
     radii: radius input of every circle you want
+
+    Returns:
+    --------------------
+    single frame plot
     '''
     markers_list = ["<",">","1","2","3","4","8"]
     phases,azimuths = {}, {}
@@ -57,7 +82,7 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
         print(data_1.shape)
         data_1 = to_magic_units(data,data_1)
 
-        plt.plot(data_1[:,0],-data_1[:,1],"--o")
+        plt.plot(data_1[:,0],-data_1[:,1],"--o",linewidth=2)
 
         phase = [data[int(y[j]+0.5),
                       int(x[j]+0.5)] for j in range(len(x))]
@@ -76,7 +101,7 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
     for i in range(len(phases)):
         plt.plot(azimuths[str(i)],
                  phases[str(i)],
-                 label = str(radii[i]) + " $\mu$m",
+                 label = str(np.round(radii[i]/23,2)) + " $\mu$m",
                  marker=markers_list[i])
     plt.legend()
     plt.ylabel("Phase ($\pi$)",fontsize=25)
