@@ -14,7 +14,7 @@ Rcorrect = 1
 @jit
 def normalize(x):
 	xmean = x.mean()
-	xstd = x.std()
+	xstd = np.sqrt(x.std()**2+0.00001)
 	return (x-xmean)/xstd
 
 @jit

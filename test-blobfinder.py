@@ -33,4 +33,4 @@ for i in range(fn):
 		y, x, r = blob
 		for j in range(4):
 			pla[j].add_patch(plt.Circle((x, y), r, color='w', linewidth=2, fill=False))
-	plt.savefig("blobs-"+str(i).rjust(4,'0')+".png")
+	plt.savefig("blobs/"+str(i).rjust(4,'0')+".png")
