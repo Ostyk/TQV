@@ -19,6 +19,14 @@ def normalize(x):
 
 @jit
 def findBetterBlob(vorticity,div,x0,y0,r,maxDelta):
+
+	'''
+	find maximum of function s**2 + kappa*t*abs(t) inside a circle at x0,y0 with radius maxDelta
+	where s = (mean value of vorticity over circle with radius r), t = (mean value of div over circle with radius r)
+	s**2 -- more vorticity in w/e direction => inside a vortex
+	t*abs(t) -- positive/high divergence => possible vortex center
+	'''
+
 	x0 = int(x0+0.5)
 	y0 = int(y0+0.5)
 	xm, ym = x0, y0
@@ -37,14 +45,17 @@ def findBetterBlob(vorticity,div,x0,y0,r,maxDelta):
 
 @jit
 def calcDiv(absval):
+	''' calculate normalized divergence '''
 	div = np.gradient(absval)
 	x = np.gradient(div[0])[0]
 	y = np.gradient(div[1])[1]
 	div = gaussian(x+y,0.5)
+	div = normalize(div)
 	return div
 
 @jit
 def calcWeightedVorticity(phase,weights):
+	''' calculate normalized vorticity '''
 	vorticity = pgi.vorticity(phase,weights,Rcurve)
 	vorticity = gaussian(vorticity,blur)
 	vorticity = normalize(vorticity)
@@ -52,6 +63,7 @@ def calcWeightedVorticity(phase,weights):
 
 @jit
 def findAllBlobs(phase,absval):
+	''' find all vortices '''
 	div = calcDiv(absval)
 	vorticity = calcWeightedVorticity(phase,div)
 	blobs = blob_dog(np.abs(vorticity), min_sigma=minSigma, max_sigma=maxSigma, threshold=threshold)
@@ -59,4 +71,5 @@ def findAllBlobs(phase,absval):
 	for blob in blobs:
 		y, x, r = blob
 		blob[1], blob[0] = findBetterBlob(vorticity,div,x,y,Rcorrect,int(r+0.5))
+	# blobs = [[y,x,r], ...]
 	return blobs, vorticity, div

@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import xarray as xr
 import holoviews as hv
@@ -15,6 +16,9 @@ fn = len(ph_fields)
 fig, pla = plt.subplots(1,4)
 
 fig.set_size_inches(20,10)
+
+if not os.path.exists("blobs"):
+	os.makedirs("blobs")
 
 for i in range(fn):
 	print(i,ph_fields[i],flush=True)
