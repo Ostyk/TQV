@@ -79,7 +79,6 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
         x,y = circle_coordinates(vortex,radii[i]/2,
                                 density=30)
         data_1 = np.vstack((x,y)).T
-        print(data_1.shape)
         data_1 = to_magic_units(data,data_1)
 
         plt.plot(data_1[:,0],-data_1[:,1],"--o",linewidth=2)
