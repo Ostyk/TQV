@@ -25,3 +25,5 @@ def rename(blobs,past,i,bonus):
                 N[mini]=past[w][2]
         for q in range(len(blobs)):
             blobs[q][2]=N[q]
+            if N[q] not in bonus:
+                bonus.append(N[q])

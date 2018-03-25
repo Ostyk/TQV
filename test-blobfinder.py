@@ -24,7 +24,7 @@ fig.set_size_inches(20,10)
 
 if not os.path.exists("blobs"):
 	os.makedirs("blobs")
-
+bonus=[]
 for i in range(fn):
     print(i,ph_fields[i],flush=True)
     ph = phases[ph_fields[i]].dimension_values("Phase", flat=False)
@@ -39,23 +39,27 @@ for i in range(fn):
     pla[1].imshow(av,cmap='hot')
     pla[2].imshow(vorticity, cmap="inferno")
     pla[3].imshow(div,cmap='gist_heat')
-    pointsx,pointsy=[],[]
-    for q in X:
-        for b in q:
-            if b[2]==0:
-                pointsx.append(b[1])
-                pointsy.append(b[0])
+    
     for blob in blobs:
         y, x, r = blob
         for j in range(4):
             pla[j].add_patch(plt.Circle((x, y), r, color='w', linewidth=2, fill=False))
-            pla[j].plot(pointsx,pointsy,color='blue')
+            for u in bonus:
+                pointsx,pointsy=[],[]
+                for q in X:
+                    for b in q:
+                        if b[2]==u:
+                            pointsx.append(b[1])
+                            pointsy.append(b[0])
+                pla[j].plot(pointsx,pointsy)
     plt.savefig("blobs/"+str(i).rjust(4,'0')+".png")
     blobs=blobs.tolist()
     X.append(blobs)
     if i==0:
         for q in range(len(X[0][0])):
             X[0][q][2]=q
+            bonus.append(q)
     else:
         vt.rename(X[i],X[i-1],i,bonus)
+        
     
