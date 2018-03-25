@@ -60,3 +60,5 @@ def findAllBlobs(phase,absval):
 		y, x, r = blob
 		blob[1], blob[0] = findBetterBlob(vorticity,div,x,y,Rcorrect,int(r+0.5))
 	return blobs, vorticity, div
+
+
