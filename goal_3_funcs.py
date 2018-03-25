@@ -7,9 +7,9 @@ def circle_coordinates(coordinates, radius,density=20):
     latitude = coordinates[0] # latitude of circle center, decimal degrees
     longitude = coordinates[1]
     x,y=[],[]
-    density = int(np.ceil(density*radius)) + 1
+    density = int(np.ceil(density*radius))# + 1
     for k in range(int(density)+1):
-        a = np.pi*2*k/density
+        a = np.pi*2*k/(density+1)
         dx = radius * np.cos(a) + latitude
         dy = radius * np.sin(a) + longitude
         x.append(dx)
@@ -45,25 +45,27 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
 
     ##FIRST PLOT
     plt.subplot(121)
-    im=plt.imshow(data, extent=(-4,4,-4,4))
+    im=plt.imshow(data)#, extent=(-4,4,-4,4))
 
     for i in range(len(radii)):
         x,y = circle_coordinates(vortex,radii[i]/2,
                                 density=30)
-        plt.plot(x,y,"--o")
+        plt.plot(np.array(x),np.array(y),"--o")
 
-        phase = [data[int(y[j]*23),
-                      int(x[j]*23)] for j in range(len(x))]
+        phase = [data[int(y[j]+0.5),
+                      int(x[j]+0.5)] for j in range(len(x))]
         az = azimuth(x,y)
         phases.update({str(i):phase})
         azimuths.update({str(i):az})
+        #for f, txt in enumerate(list(range(len(x)))):
+        #    plt.annotate(txt, (x[f],y[f]))
 
     plt.colorbar(im)#,label="Phase ($\pi$)")
     s=0.1
-    plt.axis([vortex[0] - max(radii)/2-s,
-              vortex[0] + max(radii)/2+s,
-              vortex[1] - max(radii)/2-s,
-              vortex[1] + max(radii)/2+s])
+    #plt.axis([vortex[0] - max(radii)/2-s,
+    #          vortex[0] + max(radii)/2+s,
+    #          vortex[1] - max(radii)/2-s,
+    #          vortex[1] + max(radii)/2+s])
     plt.xlabel("x ($\mu$m)",fontsize=25)
     plt.ylabel("y ($\mu$m)",fontsize=25)
 
@@ -75,6 +77,8 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
                  phases[str(i)],
                  label = str(radii[i]) + " $\mu$m",
                  marker=markers_list[i])
+        #for f, txt in enumerate(list(range(len(phases[str(i)])))):
+        #    plt.annotate(txt, (azimuths[str(i)][f],phases[str(i)][f]))
     plt.legend()
     plt.ylabel("Phase ($\pi$)",fontsize=25)
     plt.xlabel("Azimuthal angle ($\pi$)",fontsize=25)
