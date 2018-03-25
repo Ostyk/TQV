@@ -31,7 +31,6 @@ for i in range(fn):
     av = masks[av_fields[i]].dimension_values("Absolute value", flat=False)
     blobs, vorticity, div = bf.findAllBlobs(ph,av)
         
-        
     #print(X[i][1].path())
     for k in range(4):
         pla[k].clear()
@@ -42,8 +41,11 @@ for i in range(fn):
     
     for blob in blobs:
         y, x, r = blob
+        c = 'b'
+        if vorticity[int(y+0.5),int(x+0.5)]>0:
+        	c = 'r'
         for j in range(4):
-            pla[j].add_patch(plt.Circle((x, y), r, color='w', linewidth=2, fill=False))
+            pla[j].add_patch(plt.Circle((x, y), r, color=c, linewidth=2, fill=False))
             for u in bonus:
                 pointsx,pointsy=[],[]
                 for q in X:
