@@ -16,11 +16,13 @@ def interp(phase,mask,x,y):
 def integrate(phase,mask,x0,y0,r,dl=0.25):
 
 	I = 0.0
+	n = 0
 	for ix in range(-r,r+1):
 		for iy in range(-r,r+1):
 			if ix*ix+iy*iy<=r*r:
 				I += mask[y0+iy,x0+ix]
-
+				n += 1
+	I /= n
 
 	n = int(2.0*np.pi*r/dl+0.5)
 	da = 2.0*np.pi/n
@@ -34,18 +36,20 @@ def integrate(phase,mask,x0,y0,r,dl=0.25):
 		yb = y0+r*np.sin(b)
 		xa, ya = interp(phase,mask,xa,ya)
 		xb, yb = interp(phase,mask,xb,yb)
-		v += (xa*yb-ya*xb)
+		v += np.arcsin(xa*yb-ya*xb)
 
-	return I*v/da/r/n
+	return I*v/da/r
 
 @jit
-def circleSum(data,x0,y0,r):
+def circleMean(data,x0,y0,r):
 	I = 0.0
+	n = 0
 	for ix in range(-r,r+1):
 		for iy in range(-r,r+1):
 			if ix*ix+iy*iy<=r*r:
 				I += data[y0+iy,x0+ix]
-	return I
+				n += 1
+	return I/n
 
 @jit
 def cutoff(mask_data,mask_threshold=0.02,mask_dilation=3):
@@ -71,12 +75,12 @@ def select(mask_data,low,high,mask_threshold=0.02,mask_dilation=3):
 	return np.array(mask_data)
 
 @jit
-def vorticityMap(phase,mask,r,mask_threshold=0.02,mask_dilation=3,dl=0.25):
+def vorticity(phase,mask,r,mask_threshold=0.02,mask_dilation=3,dl=0.25):
 	assert(phase.shape==mask.shape)
 
 	phase = np.array(phase)
-	#mask = np.array(mask)
-	mask = cutoff(np.array(mask),mask_threshold,mask_dilation)
+	mask = np.array(mask)
+	#mask = cutoff(np.array(mask),mask_threshold,mask_dilation)
 
 	shape = phase.shape
 	v = np.zeros_like(mask)
