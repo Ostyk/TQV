@@ -89,3 +89,31 @@ def vorticity(phase,mask,r,mask_threshold=0.02,mask_dilation=3,dl=0.25):
 			v[iy,ix] = integrate(phase,mask,ix,iy,r,dl)
 
 	return v
+
+@jit
+def dist(l1,l2):
+    #self explanatory. distance between two blobs
+    return (l1[1]-l2[1])**2+(l1[2]-l2[2])**2
+
+def rename(blobs,past,i):
+    #sets up name for vortices according to rule, that 
+    D=np.ndarray((len(blobs),len(past)))
+    for w in range(len(blobs)):
+        for ww in range(len(past)):
+            D[w][ww]=dist(blobs[w],past[ww])    
+    if len(past)>=len(blobs):
+        #print(D)
+        for w in range(len(blobs)):
+            mini=np.argmin(D[w])
+            blobs[w][4]=past[mini][4]
+    else:
+        #print(D.T)
+        N=np.arange(len(blobs))+np.ones(len(blobs))*i*100
+        for w in range(len(blobs)):
+            try:
+                mini=np.argmin(D.T[w])
+                N[mini]=past[w][4]
+            except IndexError:
+                #print('new label 2'+str(i))
+                continue
+        blobs[:,4]=N
