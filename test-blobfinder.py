@@ -7,6 +7,7 @@ import blobfinder as bf
 import phasegradint as pgi
 import vortracker as vt
 
+
 max_tuples=10
 
 ds = xr.open_dataset("fuw hackathon 2018/data/2017-11-03 mag sequence phase.nc")
@@ -41,12 +42,20 @@ for i in range(fn):
     pointsx,pointsy=[],[]
     for q in X:
         for b in q:
-            pointsx.append(b[1])
-            pointsy.append(b[0])
+            if b[2]==0:
+                pointsx.append(b[1])
+                pointsy.append(b[0])
     for blob in blobs:
         y, x, r = blob
         for j in range(4):
             pla[j].add_patch(plt.Circle((x, y), r, color='w', linewidth=2, fill=False))
-            pla[j].scatter(pointsx,pointsy,color='b',marker='x')
+            pla[j].plot(pointsx,pointsy,color='blue')
     plt.savefig("blobs/"+str(i).rjust(4,'0')+".png")
+    blobs=blobs.tolist()
     X.append(blobs)
+    if i==0:
+        for q in range(len(X[0][0])):
+            X[0][q][2]=q
+    else:
+        vt.rename(X[i],X[i-1],i,bonus)
+    
