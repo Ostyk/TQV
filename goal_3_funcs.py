@@ -7,14 +7,14 @@ def circle_coordinates(coordinates, radius,density=20):
     latitude = coordinates[0] # latitude of circle center, decimal degrees
     longitude = coordinates[1]
     x,y=[],[]
-    density = int(np.ceil(density*radius)) + 1
+    density = int(np.ceil(density*radius))
     for k in range(int(density)+1):
-        a = np.pi*2*k/density
+        a = np.pi*2*k/(density+1)
         dx = radius * np.cos(a) + latitude
         dy = radius * np.sin(a) + longitude
         x.append(dx)
         y.append(dy)
-    return x,y
+    return np.array(x),np.array(y)
 @jit
 def azimuth(x,y):
     r=np.zeros(len(x))
@@ -27,6 +27,8 @@ def azimuth(x,y):
             Y1, Y2 = y[i], y[i+1]
         r[i]=np.arctan2(X2-X1,Y2-Y1)/np.pi
     return r
+def to_magic_units(data,x):
+    return (np.array(x)-0.5*np.array(data.shape[::-1]))/23
 
 def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
     '''
@@ -45,25 +47,26 @@ def single_frame(data, vortex = [2,2], radii = [1],savefig=False):
 
     ##FIRST PLOT
     plt.subplot(121)
-    im=plt.imshow(data, extent=(-4,4,-4,4))
+    p, q = to_magic_units(data,[[0,0],data.shape[::-1]])
+    im=plt.imshow(data, extent=(p[0],q[0],p[1],q[1]))
 
     for i in range(len(radii)):
         x,y = circle_coordinates(vortex,radii[i]/2,
                                 density=30)
-        plt.plot(x,y,"--o")
+        data_1 = np.vstack((x,y)).T
+        print(data_1.shape)
+        data_1 = to_magic_units(data,data_1)
 
-        phase = [data[int(y[j]*23),
-                      int(x[j]*23)] for j in range(len(x))]
+        plt.plot(data_1[:,0],-data_1[:,1],"--o")
+
+        phase = [data[int(y[j]+0.5),
+                      int(x[j]+0.5)] for j in range(len(x))]
         az = azimuth(x,y)
         phases.update({str(i):phase})
         azimuths.update({str(i):az})
 
-    plt.colorbar(im)#,label="Phase ($\pi$)")
-    s=0.1
-    plt.axis([vortex[0] - max(radii)/2-s,
-              vortex[0] + max(radii)/2+s,
-              vortex[1] - max(radii)/2-s,
-              vortex[1] + max(radii)/2+s])
+    plt.colorbar(im)
+
     plt.xlabel("x ($\mu$m)",fontsize=25)
     plt.ylabel("y ($\mu$m)",fontsize=25)
 
